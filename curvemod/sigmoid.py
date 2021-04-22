@@ -1,10 +1,11 @@
-# ------------------------------ #
-# Aizan's curve fitting function #
-# ------------------------------ #
+# --------------------------- #
+# Aizan's curve fitting class #
+# --------------------------- #
 
 import scipy.optimize as opt
 import numpy as np
 from matplotlib.ticker import ScalarFormatter
+from sklearn.metrics import r2_score
 
 
 def four_pl(x, a, b, c, d):
@@ -50,12 +51,12 @@ class Sigmoid:
         """Draw the fitted curve
 
         Params
-          ax        :
-          fit       :
-          points    :
-          line_col  :
-          point_col :
-          log       :
+          ax        : The Axes object to draw the plot on.
+          fit       : Pass Sigmoid.fit() to this parameter.
+          points    : bool; if True, draws points from actual data.
+          line_col  : str; color for the line
+          point_col : str; color for the points
+          log       : int; if set to a number, will use that number as base to the log
         """
         min_x, max_x = np.amin(self.x_values), np.amax(self.x_values)
         model_x = np.linspace(min_x, max_x, 1000)
@@ -67,3 +68,18 @@ class Sigmoid:
 
         if points:
             ax.plot(self.x_values, self.y_values, marker="o", linestyle="", color=point_col)
+
+    def r2(self, fit, ax=None):
+        """Returns computed R-squared (coefficient of determination) value.
+
+        Params:
+          fit : Pass Sigmoid.fit() to this parameter.
+          ax  : If supplied, with use the "legend" spot to indicate r2 value
+        """
+        r2 = r2_score(self.y_values, four_pl(self.x_values, *fit))
+
+        if not ax:
+            return print(f"r2: {round(r2, 3)}")
+        if ax:
+            ax.plot([], [], linestyle="", label=f"r2: {round(r2, 3)}")
+            ax.legend()
