@@ -47,6 +47,13 @@ _x = _df["Dilution"].to_list()
 _y = _df["OD450"].to_list()
 ```
 
+In the case where `four_pl()` computation would fail due to *ugly* y-values, there is `.spline()` method that would instead draw a B-spline smoothing for the data.
+
+```python
+# Assume the same my_curve Sigmoid object as above
+my_curve.spline(ax=ax, color="tomato")
+```
+
 ## Confidence interval
 
 Seaborn has `sns.regplot()` for plotting linear regression with minimal user input. However, it lacks customization, e.g. coloring each individual data points. The class `ConfInt` from the `curvemod` module can be used to draw linear regression line with `ConfInt.lin_reg()` method and the confidence interval band with `ConfInt.confidence_interval()` method.
@@ -54,8 +61,13 @@ Seaborn has `sns.regplot()` for plotting linear regression with minimal user inp
 Quick tutorial:
 
 ```python
+# Import
+from curvemod import ConfInt
+
+# Load x and y value (list)
 my_regression = ConfInt(x_data, y_data)
 
+# Run the chart for both .confidence_interval() and .lin_reg()
 fig, ax = plt.subplots()
 my_regression.confidence_interval(ax=ax)
 my_regression.lin_reg(ax=ax)

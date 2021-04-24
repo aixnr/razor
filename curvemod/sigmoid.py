@@ -6,6 +6,7 @@ import scipy.optimize as opt
 import numpy as np
 from matplotlib.ticker import ScalarFormatter
 from sklearn.metrics import r2_score
+from scipy import interpolate
 
 
 def four_pl(x, a, b, c, d):
@@ -83,3 +84,16 @@ class Sigmoid:
         if ax:
             ax.plot([], [], linestyle="", label=f"r2: {round(r2, 3)}")
             ax.legend()
+
+    def spline(self, ax, color="silver"):
+        """
+
+        """
+        # Run spline interpolation
+        min_x, max_x = np.amin(self.x_values), np.amax(self.x_values)
+        new_x = np.linspace(min_x, max_x, 1000)
+        b_spline = interpolate.make_interp_spline(x=self.x_values, y=self.y_values)
+        new_y = b_spline(new_x)
+
+        ax.plot(new_x, new_y, alpha=0.5, color=color, linestyle="--")
+        ax.plot(self.x_values, self.y_values, color=color, marker="o", linestyle="")
