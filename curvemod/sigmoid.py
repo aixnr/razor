@@ -29,9 +29,20 @@ class Sigmoid:
 
     See individual methods for more information
     """
-    def __init__(self, x, y):
+    def __init__(self, x, y, start_conc=None, dilution=None):
+        """
+        Params:
+          x          : list
+          y          : list;
+          start_conc : float;
+          dilution   : list;
+          conc_list  : list; Calculate two-fold down, log10-transformed of the start_conc (7 dilution points)
+        """
         self.x_values = x
         self.y_values = y
+        self.start_conc = start_conc
+        self.dilution = dilution
+        self.conc_list = []
 
     def __repr__(self):
         pass
@@ -97,3 +108,30 @@ class Sigmoid:
 
         ax.plot(new_x, new_y, alpha=0.5, color=color, linestyle="--")
         ax.plot(self.x_values, self.y_values, color=color, marker="o", linestyle="")
+
+    def interpolate(self, data, ax=None, unit=None):
+        """Function to interpolate concentration (x) from OD (y) for samples based on standard curve
+
+        Assumption:
+          1. Has 7 dilution points for the standards, well #8 is the blank
+          2. Standard is in ng/ml concentration (for self.start_conc)
+
+        Workflow:
+          1. Get the blank from self.y_values (last position), remove last value in self.x_values
+          2. Use the blank to subtract values in the samples and (avg) standards
+          3. Create a new DataFrame, with columns for the sample dilution points (self.dilution)
+          4. Perform curve fit with four_pl(), extract each parameter into own variables
+          5. Get x from 4PL params, correct for log, correct for dilution
+          6. Run median calculation
+          7. Draw a bar plot for the median values
+
+        Params:
+          data :
+          ax   :
+          unit :
+
+        Return:
+          If ax=False or None, returns a DataFrame of subjects and median values of concentration
+          If ax=True, draws a bar plot, x=Subjects, y=concentration in the unit specified
+        """
+        pass

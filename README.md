@@ -16,6 +16,7 @@ Assuming the repo exists at this location: `C:\Users\my_user\Documents\Repo\razo
 
 1. [Sigmoid curve fitter](#sigmoid-curve-fitter)
 2. [Confidence interval](#confidence-interval)
+3. [Avidity index calculator](#avidity-index-calculator)
 
 ## Sigmoid curve fitter
 
@@ -72,3 +73,59 @@ fig, ax = plt.subplots()
 my_regression.confidence_interval(ax=ax)
 my_regression.lin_reg(ax=ax)
 ```
+
+## Avidity index calculator
+
+This module performs avidity index calculation, which is defined as the ratio of area under the curve (AUC) of antibody titration of the chaotrope-treated sample over the non-treated control sample. Basically:
+
+```bash
+avidity index = AUC of treated sample / AUC of non-treated control sample
+```
+
+This module will perform linear regression with `sklearn.linear_model.LinearRegression()` class, then it will return the predicted `y` value. This predicted `y` value will be used to calculate the avidity index. This works based on the assumption that the original `y` values present as a straight line on the log-transformed x-axis, and the predicted `y` value is used to increase the robustness of the analysis.
+
+This module assumes the following columns are present:
+
+* Subject
+* Timepoint
+* Isotype (e.g. IgG, IgA)
+* Antigen
+* Treated (Yes or No, as string)
+* Blank (blank values for the negative control wells)
+* dil_1, dil_2, dil_4, dil_8, dil_16, and dil_32, which hold the OD values
+
+When `dilution_mapper` is not passed, it will use the default dilution scheme (1, 2, 4, 8, 16, and 32). Whenever the `dilution_mapper` is supplied (a dictionary, see example code below), it will re-map all the column names for the dilution series accordingly. This is *somewhat* important when it comes to calculating the AUC with `np.trapz()` function.
+
+```python
+# Module import
+from curvemod import Avipy
+
+# Load data from, presumably, a well-annotated Excel spreadsheet
+df = pd.read_excel("spreadsheet")
+
+# Provide dilution as dictionary to map the default values
+dilution_mapper = {"dil_1": 200, 
+                   "dil_2": 400, 
+                   "dil_4": 800, 
+                   "dil_8": 1600, 
+                   "dil_16": 3200, 
+                   "dil_32": 6400}
+
+# Instantiate the Avipy object with the name avi
+avi = Avipy(df, dilution_mapper=dilution_mapper)
+
+# Return data the supplied data
+avi.df()
+
+# Calculate AUC
+avi.auc()
+
+# Calculate avidity index
+avi.avidity_index()
+
+# Plot the data
+fig, ax = plt.subplots()
+avi.plotter(subject, antigen, timepoint, isotype, ax)
+```
+
+The `.plotter()` method plots AUC from the predicted `y` values as line and shades the AUC till `y=0`, and it also plots the original `y` values with circular markers. It outputs, as legend, the R^2 (coefficient of determination) for treated and untreated samples, along with the avidity index. Use your judgment to validate a sample based on the R^2 value. If the R^2 is low (e.g. below 0.7), which indicates a weak agreement between the original and predicted y values, consider investigating that particular sample.
