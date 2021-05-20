@@ -125,7 +125,12 @@ avi.avidity_index()
 
 # Plot the data
 fig, ax = plt.subplots()
-avi.plotter(subject, antigen, timepoint, isotype, ax)
+avi.plotter(subject, antigen, timepoint, isotype, ax, treshold=0.85)
 ```
 
 The `.plotter()` method plots AUC from the predicted `y` values as line and shades the AUC till `y=0`, and it also plots the original `y` values with circular markers. It outputs, as legend, the R^2 (coefficient of determination) for treated and untreated samples, along with the avidity index. Use your judgment to validate a sample based on the R^2 value. If the R^2 is low (e.g. below 0.7), which indicates a weak agreement between the original and predicted y values, consider investigating that particular sample.
+
+Special handlings:
+
+* If negative value is encountered in predicted `y` value, `.auc()` method would change that into `0`. This would prevent from the AUC from being negative.
+* If threshold is set, if the R^2 is below this value, the `marker` for the original data is set to triangle `^` instead of circle `o`.

@@ -9,16 +9,10 @@ from matplotlib.ticker import ScalarFormatter
 
 
 class Avipy:
-    def __init__(self, data, dilution_mapper=None):
-        """Prepares the dataset
 
-        Steps involved:
-          1. Prepares the blank, the drops the column
-          2. Map the dilution by renaming the column from "dil_n" to n
-          3. Subtract values with blank
-        """
-        self.blank = data["Blank"].mean()
-        self.data = data.drop(columns="Blank")
+    def __init__(self, data, dilution_mapper=None):
+
+        self.data = data.copy()
 
         # Working with dilution mapping
         if not dilution_mapper:
@@ -28,10 +22,13 @@ class Avipy:
         if dilution_mapper:
             self.data = self.data.rename(columns=dilution_mapper)
             self.dilution = [value for key, value in dilution_mapper.items()]
-        
-        # Data with blank
+
+        # Applying blank to OD values, the .apply()
         for _col in self.dilution:
-            self.data[_col] = self.data[_col].apply(lambda x: x - self.blank)
+            self.data[_col] = self.data.apply(lambda x: x[_col] - x["Blank"], axis=1)
+
+        # Remove blank column
+        self.data = self.data.drop(columns="Blank")
 
     def df(self):
         """Return the data table stored in the object
@@ -85,15 +82,25 @@ class Avipy:
 
         This function would drop the original y (OD) data, 
           only showing the predicted y data.
+
+        For AUC calculation, area cannot be a negative number. However, this method
+          does not have a special handling for that.
+          Predicted values < 0 would result in negative AUC. Change them to 0.
         """
         _df = self.fit()
         _df = _df.drop(columns=self.dilution)
+
+        # Constant for column names of predicted values
+        _columns = [f"{dilution}, pred" for dilution in self.dilution]
+
+        # Change negative predicted value to 0 with .apply() and ternary operation
+        for _col in _columns:
+            _df[_col] = _df[_col].apply(lambda x: 0 if x < 0 else x)
 
         # Measuring the AUC, the function
         def _calculate_auc(x):
             """Calculating AUC using the np.trapz(y, x)
             """
-            _columns = [f"{dilution}, pred" for dilution in self.dilution]
             values_y = x[_columns]
             values_x = np.array(self.dilution)
 
@@ -105,7 +112,7 @@ class Avipy:
         return _df
 
     def avidity_index(self):
-        """Calculate the avidity index based on the AUC data from .auc() metho
+        """Calculate the avidity index based on the AUC data from .auc() method
 
         I consider this function a little brittle, due to how it
           calculates the avidity index.
@@ -132,7 +139,7 @@ class Avipy:
 
         return _avidity_df
     
-    def plotter(self, subject, antigen, timepoint=None, isotype="IgG", ax=None):
+    def plotter(self, subject, antigen, timepoint=None, isotype="IgG", ax=None, threshold=0.85):
         """Plotter function to visualize the AUC
 
         Plots straight line for the predicted y
@@ -140,6 +147,14 @@ class Avipy:
 
         Shades AUC with blue for the untreated (control).
         Shares AUC with red for the treated.
+
+        Param
+          subject   : Refer to original dataset
+          antigen   : Refer to original dataset
+          timepoint : Refer to original dataset
+          isotype   : Refer to original dataset
+          ax        : Axes object
+          threshold : float; Below this value, change the marker from "o" to "^"
         """
         _x_original = self.dilution
         _x_predicted = [f"{dilution}, pred" for dilution in self.dilution]
@@ -175,6 +190,14 @@ class Avipy:
         _r2_untrt = round(_df.query(" Treated == 'No' ")["R^2"].to_list()[0], 3)
         _r2_trt = round(_df.query(" Treated == 'Yes' ")["R^2"].to_list()[0], 3)
 
+        # Shape of the marker when R^2 reaches certain threshold
+        _marker_original = {"untrt": "o", "trt": "o"}
+        for _r, _k in zip([_r2_untrt, _r2_trt], ["untrt", "trt"]):
+            if _r <= threshold:
+                _marker_original[_k] = "^"
+            elif _r > threshold:
+                _marker_original[_k] = "o"
+
         # If Axes object not provided, return subsetted DataFrame
         if not ax:
             return _df
@@ -190,13 +213,13 @@ class Avipy:
             ax.plot(_x_original, _y_predicted_trt, color=_color_trt)
 
             # Plot circular markers for the original values
-            ax.plot(_x_original, _y_original_untrt, color=_color_untrt, marker="o", linestyle="")
-            ax.plot(_x_original, _y_original_trt, color=_color_trt, marker="o", linestyle="")
+            ax.plot(_x_original, _y_original_untrt, color=_color_untrt, marker=_marker_original["untrt"], linestyle="")
+            ax.plot(_x_original, _y_original_trt, color=_color_trt, marker=_marker_original["trt"], linestyle="")
 
             # Add legend for the R^2 values
             ax.plot([], [], label=f"AI: {round(_avidity_index, 3)}", linestyle="")
-            ax.plot([], [], label=fr"R$^{2}$ untrt: {_r2_untrt}", color=_color_untrt)
-            ax.plot([], [], label=fr"R$^{2}$ trt: {_r2_trt}", color=_color_trt)
+            ax.plot([], [], marker=_marker_original["untrt"], label=fr"R$^{2}$ untrt: {_r2_untrt}", color=_color_untrt)
+            ax.plot([], [], marker=_marker_original["trt"],label=fr"R$^{2}$ trt: {_r2_trt}", color=_color_trt)
             ax.legend(frameon=False)
 
             # Customization
