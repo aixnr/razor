@@ -14,9 +14,10 @@ Assuming the repo exists at this location: `C:\Users\my_user\Documents\Repo\razo
 
 ## Tools
 
-1. [Sigmoid curve fitter](#sigmoid-curve-fitter)
-2. [Confidence interval](#confidence-interval)
-3. [Avidity index calculator](#avidity-index-calculator)
+1. [Sigmoid curve fitter](#sigmoid-curve-fitter) with `curvemod.Sigmoid`
+2. [Confidence interval](#confidence-interval) with `curvemod.ConfInt`
+3. [Avidity index calculator](#avidity-index-calculator) with `curvemod.Avipy`
+4. [Correlation heatmap](#correlation-heatmap) with `vizzy.Heatermap`
 
 ## Sigmoid curve fitter
 
@@ -134,3 +135,41 @@ Special handlings:
 
 * If negative value is encountered in predicted `y` value, `.auc()` method would change that into `0`. This would prevent from the AUC from being negative.
 * If threshold is set, if the R^2 is below this value, the `marker` for the original data is set to triangle `^` instead of circle `o`.
+
+## Correlation heatmap
+
+The usual method to generate a correlation heatmap is by using the `.corr()` method on a Pandas DataFrame, and then use that draw a heatmap with `sns.heatmap()` (from Seaborn). This is already great, especially with the ability to use masking (see this tutorial on Towards Data Science: [Heatmap Basics with Seaborn](https://towardsdatascience.com/heatmap-basics-with-pythons-seaborn-fb92ea280a6c)). After reading this post on Towards Data Science ([Better Heatmaps and Correlation Matrix Plots in Python](https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec)), I learned that heatmap is essentially a scatterplot. This led to me writing the `Heatermap` class. Essentially, it encodes 2 information: the correlation (with marker color) and the p-value (with the marker size and marker alpha). Strong correlation makes marker to have color that is intense (positive: red, negative: blue), weak or no significant correlation reduces the intensity of the color and halves the size of the marker.
+
+Assume that a dataset has rows as observations (names are string) and columns as (unique) features with values being numeric (integer or float), then
+
+```python
+# Import pyplot and pandas
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Import the Heatermap class and the colorbar() function
+from vizzy import Heatermap
+from vizzy.heatermap import colorbar
+
+# Load data
+df = pd.read_excel("spreadsheet.xlsx")
+
+# Gridspec call, ax1 for the heatmap, ax2 for the colorbar
+fig = plt.figure()
+gs = fig.add_gridspec(1, 16)       # 16-column gridspec
+
+# Main heatmap
+ax1 = fig.add_subplot(gs[:, :-2])  # Column 1 -- 14
+Heatermap(df).plotter(size_scale=1200, method="spearman", ax=ax1, shape="o")
+
+# The colorbar
+ax2 = fig.add_subplot(gs[:,-1])    # Column 16
+colorbar(ax2, scale_spacing=5)
+```
+
+Explanation
+
+* `Heatermap.plotter()` requires the `size_scale` to scale the marker.
+* Currently, `spearman` and `pearson` methods are supported.
+* The `shape` paramater is passed to the `marker` parameter, where `s` is square, `o` is circle, etc. Refer to Matplotlib documentation.
+* For `colorbar()` function, `scale_spacing` refers to the number of y-tick spacings.
