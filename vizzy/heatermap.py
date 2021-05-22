@@ -65,6 +65,7 @@ def colorbar(ax, scale_spacing=3):
     )
 
     # Fine customization
+    ax.set_title(r"$R$")
     ax.set_xlim(1, 2)                                        # Clip x-axis
     ax.grid(False)
     ax.set_facecolor("white")
@@ -121,19 +122,31 @@ class Heatermap:
         elif p_value:
             return calculate_p_value(_melted_df)
 
-    def plotter(self, ax=None, size_scale=500, label_size=12, method="pearson", shape="s"):
-        """
+    def plotter(self, ax=None, size_scale=500, label_size=12, method="pearson", shape="s", feature_order=None):
+        """Plot the correlation heatmap
+
+        Parameters
+          ax            : Axes object
+          size_scale    : int; Set the size for the marker. Increase or decrease whenever needed
+          label_size    : int; Set font size for the x- and y-axis labels
+          method        : str; Correlation calculation method, either 'pearson' or 'spearman'
+          shape         : str; Shape of the marker, 's' for square, 'o' for circle
+          feature_order : list; Override the order for the x- and y-labels with manual ordering
         """
         # Perform correlation
         _df = self.corr(method=method, p_value=True)
 
         # Half the size and opacity when p-value > 0.05
-        _df["size"] = _df["p-value"].apply(lambda x: size_scale if x < 0.05 else size_scale / 2)
-        _df["alpha"] = _df["p-value"].apply(lambda x: 0.5 if x > 0.1 else 1.0)
+        _df["size"] = _df["p-value"].apply(lambda x: size_scale if x < 0.05 else size_scale / 3)
+        _df["alpha"] = _df["p-value"].apply(lambda x: 0.25 if x > 0.1 else 1.0)
 
         # Label for x is ascending, label for y is descending
-        _x_label = sorted([x for x in _df["feature_x"].unique()])
-        _y_label = sorted([y for y in _df["feature_y"].unique()], reverse=True)
+        if not feature_order:
+            _x_label = sorted([x for x in _df["feature_x"].unique()])
+            _y_label = sorted([y for y in _df["feature_y"].unique()], reverse=True)
+        elif feature_order:
+            _x_label = [x for x in feature_order]          # Retain ordering
+            _y_label = [y for y in feature_order[::-1]]    # Reverse the ordering with [::-1] slice
 
         # Map number to label with enumerate(), to be used when calling ax.scatter()
         _x_label_numeric = {e[1]: e[0] for e in enumerate(_x_label)}
