@@ -146,8 +146,8 @@ class Heatermap:
         # Perform correlation
         _df = self.corr(method=method, p_value=True)
 
-        # Reduce the marker's opacity when p-value > 0.05 (not significant)
-        _df["alpha"] = _df["p-value"].apply(lambda x: 0.25 if x > 0.1 else 1.0)
+        # Reduce the marker's opacity when p-value > 0.051 (not significant)
+        _df["alpha"] = _df["p-value"].apply(lambda x: 0.25 if x > 0.051 else 1.0)
 
         # Reduce the marker's size where R-value is -0.5 < x < 0.5 due to weak correlation
         _df["size"] = _df["corr"].apply(lambda x: 0.4 * size_scale if abs(x) < 0.5 else size_scale)

@@ -138,9 +138,11 @@ Special handlings:
 
 ## Correlation heatmap
 
-The usual method to generate a correlation heatmap is by using the `.corr()` method on a Pandas DataFrame, and then use that draw a heatmap with `sns.heatmap()` (from Seaborn). This is already great, especially with the ability to use masking (see this tutorial on Towards Data Science: [Heatmap Basics with Seaborn](https://towardsdatascience.com/heatmap-basics-with-pythons-seaborn-fb92ea280a6c)). After reading this post on Towards Data Science ([Better Heatmaps and Correlation Matrix Plots in Python](https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec)), I learned that heatmap is essentially a scatterplot. This led to me writing the `Heatermap` class. Essentially, it encodes 2 information: the correlation (with marker's color for direction and size for strength) and the p-value (with marker's opacity). Strong correlation makes marker to have color that is intense (positive: red, negative: blue) while weaker correlation (below 0.5 in either direction) reduces the size of the marker. When the correlation isn't significant (p-value > 0.05), the marker turns dim.
+The usual method to generate a correlation heatmap is by using the `.corr()` method on a Pandas DataFrame, and then draw a heatmap by feeding the output into `sns.heatmap()` (from Seaborn). This is already great, especially with the ability to use masking (see this tutorial on Towards Data Science: [Heatmap Basics with Seaborn](https://towardsdatascience.com/heatmap-basics-with-pythons-seaborn-fb92ea280a6c)) to create a triangular heatmap. 
 
-Assume that a dataset has rows as observations (names are string) and columns as (unique) features with values being numeric (integer or float), then
+After reading this post on Towards Data Science ([Better Heatmaps and Correlation Matrix Plots in Python](https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec)), I realized that heatmap is essentially a scatterplot. This led to the birth of this `Heatermap` class. Essentially, it encodes 2 information: the correlation (with marker's color for direction and size for strength) and the p-value (with marker's opacity). Strong correlation makes marker to have color that is intense (positive: red, negative: blue) while weaker correlation (below 0.5 in either direction) reduces the size of the marker. When the correlation isn't significant (p-value > 0.05), the marker turns dim.
+
+Assume that a dataset has rows as observations and *n* columns as (unique) features with values being numeric (integer or float), then
 
 ```python
 # Import pyplot and pandas
@@ -169,12 +171,15 @@ colorbar(ax2, scale_spacing=5)
 
 Explanation
 
-* `Heatermap.plotter()` requires the `size_scale` to scale the marker, default is `500`. It also accepts `feature_order` parameter to customize the positioning of labels on the x- and y-axis, overriding the automatic sorting.
-* Currently, `spearman` and `pearson` methods are supported for calculating the R value.
-* The `shape` paramater is passed to the `marker` parameter, where `s` is square, `o` is circle, etc. Refer to Matplotlib documentation.
+* `Heatermap.plotter()` requires the `size_scale` to scale the marker, default is `500`. 
+* It also accepts `feature_order` parameter to customize the positioning of labels on the x- and y-axis, overriding the automatic sorting. This `feature_order` can also be used to exclude columns that are present in the dataframe during plotting.
+* Currently, `spearman` and `pearson` (default) methods are supported for calculating the R value.
+* The `shape` paramater is passed to the `marker` parameter, where `s` is square, `o` is circle, etc. Refer to Matplotlib documentation for list of available shapes.
 * For `colorbar()` function, `scale_spacing` refers to the number of y-tick spacings.
 
-Special handling: dealing with outliers with robust scaling and winsorization. Sometimes, the data could have outliers that could nudge the p-value towards significance and strong R value in either direction. To deal with this annoying situation, scaling the values and performing winsorization might help. The code block below taken from my A-039 analysis on human IgG multiplex data.
+As an additional note regarding to cleaning data, consider performing log-transformation (i.e. transform data into log2 or log10-based) prior to using parametric statistical test. Check the values afterwards with Shapiro-Wilk test or run a Q-Q plot so see the *normality* of the data.
+
+Special handling: dealing with outliers using robust scaling and winsorization. Sometimes, the data could have outliers that could nudge the p-value towards significance and strong R value in either direction. To deal with this annoying situation, scaling the values and performing winsorization might help. The code block below taken from my A-039 analysis on human IgG multiplex data.
 
 ```python
 from scipy.stats.mstats import winsorize
