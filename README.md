@@ -138,7 +138,7 @@ Special handlings:
 
 ## Correlation heatmap
 
-The usual method to generate a correlation heatmap is by using the `.corr()` method on a Pandas DataFrame, and then use that draw a heatmap with `sns.heatmap()` (from Seaborn). This is already great, especially with the ability to use masking (see this tutorial on Towards Data Science: [Heatmap Basics with Seaborn](https://towardsdatascience.com/heatmap-basics-with-pythons-seaborn-fb92ea280a6c)). After reading this post on Towards Data Science ([Better Heatmaps and Correlation Matrix Plots in Python](https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec)), I learned that heatmap is essentially a scatterplot. This led to me writing the `Heatermap` class. Essentially, it encodes 2 information: the correlation (with marker color) and the p-value (with the marker size and marker alpha). Strong correlation makes marker to have color that is intense (positive: red, negative: blue), weak or no significant correlation reduces the intensity of the color and halves the size of the marker.
+The usual method to generate a correlation heatmap is by using the `.corr()` method on a Pandas DataFrame, and then use that draw a heatmap with `sns.heatmap()` (from Seaborn). This is already great, especially with the ability to use masking (see this tutorial on Towards Data Science: [Heatmap Basics with Seaborn](https://towardsdatascience.com/heatmap-basics-with-pythons-seaborn-fb92ea280a6c)). After reading this post on Towards Data Science ([Better Heatmaps and Correlation Matrix Plots in Python](https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec)), I learned that heatmap is essentially a scatterplot. This led to me writing the `Heatermap` class. Essentially, it encodes 2 information: the correlation (with marker's color for direction and size for strength) and the p-value (with marker's opacity). Strong correlation makes marker to have color that is intense (positive: red, negative: blue) while weaker correlation (below 0.5 in either direction) reduces the size of the marker. When the correlation isn't significant (p-value > 0.05), the marker turns dim.
 
 Assume that a dataset has rows as observations (names are string) and columns as (unique) features with values being numeric (integer or float), then
 
@@ -169,7 +169,28 @@ colorbar(ax2, scale_spacing=5)
 
 Explanation
 
-* `Heatermap.plotter()` requires the `size_scale` to scale the marker.
-* Currently, `spearman` and `pearson` methods are supported.
+* `Heatermap.plotter()` requires the `size_scale` to scale the marker, default is `500`. It also accepts `feature_order` parameter to customize the positioning of labels on the x- and y-axis, overriding the automatic sorting.
+* Currently, `spearman` and `pearson` methods are supported for calculating the R value.
 * The `shape` paramater is passed to the `marker` parameter, where `s` is square, `o` is circle, etc. Refer to Matplotlib documentation.
 * For `colorbar()` function, `scale_spacing` refers to the number of y-tick spacings.
+
+Special handling: dealing with outliers with robust scaling and winsorization. Sometimes, the data could have outliers that could nudge the p-value towards significance and strong R value in either direction. To deal with this annoying situation, scaling the values and performing winsorization might help. The code block below taken from my A-039 analysis on human IgG multiplex data.
+
+```python
+from scipy.stats.mstats import winsorize
+from sklearn.preprocessing import RobustScaler
+
+def robust_scaling(data, drop_col=["Type", "Day"]):
+    _scaler = RobustScaler()
+    _df = data.drop(columns=drop_col).reset_index(drop=True)
+    _columns_antigen = _df.columns[1:]
+    
+    # Winsorize 10% highest and lowest value
+    for ag in _columns_antigen:
+        _df[ag] = [x for x in winsorize(_df[ag].to_list(), limits=[0.1, 0.1]).data]
+    
+    # Re-scale
+    for ag in _columns_antigen:
+        _df[ag] = _scaler.fit_transform(_df[[ag]])
+    return _df
+```

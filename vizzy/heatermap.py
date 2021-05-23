@@ -84,6 +84,11 @@ class Heatermap:
         self.data = data.copy()
 
     def corr(self, method="pearson", p_value=False):
+        """
+        Parameters
+          methods :
+          p_value :
+        """
         # Create a correlation matrix with pd.corr()
         _corr_df = self.data.corr(method=method)
 
@@ -109,10 +114,14 @@ class Heatermap:
 
             # Loop to perform p-value calculation
             for _x, _y in zip(_feature_x, _feature_y):
-                _x_value = self.data[_x]  # Using column name on self.data DataFrame
-                _y_value = self.data[_y]  # Using column name on self.data DataFrame
+                # Using column names (_x and _y) to extract data as pd.Series
+                _x_value = self.data[_x]
+                _y_value = self.data[_y]
+
+                # Perform stats
                 _p_val = _stat(_x_value, _y_value)[1]  # p-value at index of 1
                 _p_val_list.append(round(_p_val, 3))   # Append and round to 3 decimal places
+
             data["p-value"] = _p_val_list              # Dump the p-values into "p-value" column
 
             return data
@@ -122,7 +131,8 @@ class Heatermap:
         elif p_value:
             return calculate_p_value(_melted_df)
 
-    def plotter(self, ax=None, size_scale=500, label_size=12, method="pearson", shape="s", feature_order=None):
+    def plotter(self, ax=None, size_scale=500, label_size=12,
+                method="pearson", shape="s", feature_order=None):
         """Plot the correlation heatmap
 
         Parameters
@@ -136,9 +146,11 @@ class Heatermap:
         # Perform correlation
         _df = self.corr(method=method, p_value=True)
 
-        # Half the size and opacity when p-value > 0.05
-        _df["size"] = _df["p-value"].apply(lambda x: size_scale if x < 0.05 else size_scale / 3)
+        # Reduce the marker's opacity when p-value > 0.05 (not significant)
         _df["alpha"] = _df["p-value"].apply(lambda x: 0.25 if x > 0.1 else 1.0)
+
+        # Reduce the marker's size where R-value is -0.5 < x < 0.5 due to weak correlation
+        _df["size"] = _df["corr"].apply(lambda x: 0.4 * size_scale if abs(x) < 0.5 else size_scale)
 
         # Label for x is ascending, label for y is descending
         if not feature_order:
