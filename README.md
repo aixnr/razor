@@ -18,6 +18,8 @@ Assuming the repo exists at this location: `C:\Users\my_user\Documents\Repo\razo
 2. [Confidence interval](#confidence-interval) with `curvemod.ConfInt`
 3. [Avidity index calculator](#avidity-index-calculator) with `curvemod.Avipy`
 4. [Correlation heatmap](#correlation-heatmap) with `vizzy.Heatermap`
+5. [LOWESS curve](#lowess-curve) with `curvemod.Lowess`
+6. [Compensation Grid](#compensation-grid) with `vizzy.Comp` (in `flower.py`)
 
 ## Sigmoid curve fitter
 
@@ -198,4 +200,41 @@ def robust_scaling(data, drop_col=["Type", "Day"]):
     for ag in _columns_antigen:
         _df[ag] = _scaler.fit_transform(_df[[ag]])
     return _df
+```
+
+## LOWESS Curve
+
+```python
+# Import matplotlib.pyplot
+import matplotlib.pyplot as plt
+
+# Import the class
+from curvemod import Lowess
+
+# Import function to generate example data
+from curvemod.lowess import data_example
+
+# Example
+x, y = data_example()
+lowess = Lowess(x, y)
+
+fig, ax = plt.subplots()
+
+lowess.plot(ax=ax)
+lowess.fit(ax=ax)
+lowess.conf_int(ax=ax, band="percentile", **kwargs)
+```
+
+For the `lowess.conf_int()` method, it accepts the following keyword arguments:
+
+- `color`, for setting the color of the band; default to `steelblue`.
+- `alpha`, for setting the transparency of the band; default to 0.1.
+- `interval`, for setting the confidence interval; default to 95 for 95%.
+
+## Compensation Grid
+
+```python
+from vizzy import Comp
+
+Comp("/path/to/exporter_fsc.csv").grid()
 ```

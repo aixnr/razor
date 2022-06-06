@@ -5,3 +5,4 @@ import os, sys; sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from sigmoid import Sigmoid
 from linreg import ConfInt
 from avipy import Avipy
+from lowess import Lowess

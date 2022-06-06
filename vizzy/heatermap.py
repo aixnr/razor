@@ -22,8 +22,12 @@ def palette(x=None, user="plotter"):
     # Use 256 color steps between -1 and 1 (range for the correlation values)
     _n_colors = 256
 
-    # Define palette
-    _palette = sns.diverging_palette(240, 10, n=_n_colors)
+    # Default val of 96 for the size of the intermediate region
+    # so that the color picks up right below r value of 0.5 for either direction
+    _intermediate_region = 96
+
+    # Define palette with n_colors and _intermediate_region
+    _palette = sns.diverging_palette(240, 10, n=_n_colors, sep=_intermediate_region)
     _color_min, _color_max = [-1, 1]
 
     # Sub-function to perform color mapping

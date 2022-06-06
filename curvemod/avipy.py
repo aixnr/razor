@@ -86,6 +86,8 @@ class Avipy:
         For AUC calculation, area cannot be a negative number. However, this method
           does not have a special handling for that.
           Predicted values < 0 would result in negative AUC. Change them to 0.
+
+        TODO: Add a switch for AUC calculation using the actual data instead of fitted model
         """
         _df = self.fit()
         _df = _df.drop(columns=self.dilution)

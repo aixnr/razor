@@ -44,11 +44,13 @@ class Sigmoid:
         self.dilution = dilution
         self.conc_list = []
 
-    def __repr__(self):
-        pass
-
-    def fit(self):
+    def fit(self, pretty=False):
         """Returning the 4 parameters as a list
+
+        Running this method without any parameter would return an array of the 4-parameters.
+
+        Parameter
+          pretty: prettify the output for human
 
         Return index (a list)
           0: (A) bottom
@@ -57,7 +59,37 @@ class Sigmoid:
           3: (D) top
         """
         params, params_cov = opt.curve_fit(four_pl, xdata=self.x_values, ydata=self.y_values, p0=[1, 1, 1, 1])
-        return params
+
+        if not pretty:
+            return params
+        if pretty:
+            print("(A) Bottom: {0:.3f}, (B) Slope: {1:.3f}, (C) IC50: {2:.3f}, (D) Top: {3:.3f}".format(*params))
+            print(f"LogIC50: {round(np.log10(params[2]), 3)}")
+
+    def predict(self, y=None, dilution=None, log_corr=True):
+        """
+
+        """
+        _fit = self.fit()
+
+        def _y_to_x(_y=y, _log_corr=log_corr):
+            """
+
+            """
+            _bottom, _slope, _ic50, _top = _fit
+            _logic50 = np.log10(_ic50)
+
+            _x = _logic50 - (np.log10((_top - _bottom) / (_y - _bottom) - 1) / _slope)
+
+            if not _log_corr:
+                return round(_x, 3)
+            elif _log_corr:
+                return round(10 ** _x, 3)
+
+        if not dilution:
+            return _y_to_x(y)
+        if dilution:
+            return _y_to_x(y) * dilution
 
     def curve(self, ax, fit, points=False, line_col="black", point_col="gray", log=None):
         """Draw the fitted curve
@@ -111,6 +143,8 @@ class Sigmoid:
 
     def interpolate(self, data, ax=None, unit=None):
         """Function to interpolate concentration (x) from OD (y) for samples based on standard curve
+
+        TODO: Need to think about this function
 
         Assumption:
           1. Has 7 dilution points for the standards, well #8 is the blank
