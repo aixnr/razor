@@ -1,6 +1,6 @@
-# Aizan's Collection of Razor Tools
+# Razor Tools
 
-Collection of small and reusable Python tools by Aizan.
+Collection of small and reusable Python tools and utility scripts for plotting.
 
 ## Installation
 
