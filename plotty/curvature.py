@@ -38,7 +38,7 @@ def four_pl(x, a, b, c, d):
     return ((a - d) / (1.0 + ((x / c) ** b))) + d
 
 
-def curvature(ax: plt.Axes, param: FourPL, color: str = "cornflowerblue", alpha: float = 1, zorder=-5) -> None:
+def curvature(ax: plt.Axes, param: FourPL, color: str = "cornflowerblue", alpha: float = 1, zorder=-5, spacing="geometric") -> None:
     """Draws the 4-parameter sigmoidal line based on FourPL calculated elsewhere.
     This was necessary because curvemod.Sigmoid can be buggy and unusable on untransformed x values.
 
@@ -51,9 +51,17 @@ def curvature(ax: plt.Axes, param: FourPL, color: str = "cornflowerblue", alpha:
     color : str
     alpha : float
     zorder : float
+    spacing : str
+      Legal values are 'linear' or 'geometric'
     """
-    print(f"{param.sample} has an IC50 of {param.ic50:,.2f}")
+    print(f"{param.sample} has an IC50 of {param.ic50:,.4f}")
 
-    model_x = np.linspace(param.min_x, param.max_x, param.n_points)
+    if spacing == "linear":
+        model_x = np.linspace(param.min_x, param.max_x, param.n_points)
+    elif spacing == "geometric":
+        model_x = np.geomspace(param.min_x, param.max_x, param.n_points)
+    else:
+        raise Exception("Invalid value for the 'spacing' parameter")
+
     ax.plot(model_x, four_pl(model_x, param.bottom, param.slope, param.ic50, param.top),
             color=color, alpha=alpha, zorder=zorder)

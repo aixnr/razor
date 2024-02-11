@@ -60,7 +60,7 @@ class Sigmoid:
             raise Exception("Error!")
 
     def curve(self, ax: plt.Axes, points=False, line_col="black", point_col="gray",
-              log: int = None, n_points=1000, alpha=0.5) -> None:
+              log: int = None, n_points=1000, alpha=0.5, spacing="geometric") -> None:
         """Draw the fitted curve
 
         Params
@@ -72,7 +72,14 @@ class Sigmoid:
           alpha     : alpha transparency value for the curve
         """
         min_x, max_x = np.amin(self.x_values), np.amax(self.x_values)
-        model_x = np.linspace(min_x, max_x, n_points)
+
+        if spacing == "linear":
+            model_x = np.linspace(min_x, max_x, n_points)
+        elif spacing == "geometric":
+            model_x = np.geomspace(min_x, max_x, n_points)
+        else:
+            raise Exception("Invalid value for the 'spacing' parameter")
+
         ax.plot(model_x, four_pl(model_x, *self.params), color=line_col, alpha=alpha)
 
         if log:
