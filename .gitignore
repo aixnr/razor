@@ -1,0 +1,6 @@
+# Ignore these directories
+.idea
+__pycache__
+razor.egg-info
+build/
+
