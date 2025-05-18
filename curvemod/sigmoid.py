@@ -48,7 +48,7 @@ class Sigmoid:
         ======
           pretty: prettify the print output for human
         """
-        params, _ = opt.curve_fit(four_pl, xdata=self.x_values, ydata=self.y_values, p0=[1, 1, 1, 1], maxfev=5000)
+        params, _ = opt.curve_fit(four_pl, xdata=self.x_values, ydata=self.y_values, maxfev=1_000_000)
         self.params = params
 
         if not pretty:

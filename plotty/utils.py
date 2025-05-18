@@ -53,44 +53,48 @@ class PlotUtils:
         fig.savefig(path, format="png", dpi=dpi, bbox_inches="tight")
 
     @staticmethod
-    def qpcr_cq(df: pd.DataFrame, ax: plt.Axes = False, **kwargs):
-        """A helper function to measure & visualize cycle threshold (Cq) from qPCR data
+    def fontsize_labels(ax: plt.Axes, axis: str, size: float) -> None:
+        if axis == "x":
+            ax.xaxis.label.set_size(size)
+        elif axis == "y":
+            ax.yaxis.label.set_size(size)
+        elif axis == "both":
+            ax.xaxis.label.set_size(size)
+            ax.yaxis.label.set_size(size)
 
-        The input DataFrame 'df' only contains a single sample with a single target.
-        If replicate present, average of replicate for Rn is calculated.
+    @staticmethod
+    def fontsize_ticks(ax: plt.Axes, axis: str, size: float) -> None:
+        if axis == "x":
+            for label in ax.get_xticklabels():
+                label.set_fontsize(size)
+        if axis == "y":
+            for label in ax.get_yticklabels():
+                label.set_fontsize(size)
+        elif axis == "both":
+            for label in ax.get_xticklabels():
+                label.set_fontsize(size)
+            for label in ax.get_yticklabels():
+                label.set_fontsize(size)
+
+    @staticmethod
+    def ticks_formatter(ax: plt.Axes, axis: str, param: tuple[float, float, float], p: int = 0) -> None:
         """
-        kws = {"cycle_bg": 10, "col_cycle": "cycle", "col_rn": "Rn", "well_loc": "well_position", 
-            "color": "gray", "threshold_multiplier": 1.25, "linear_range": 7}
-        for _k, _v in kwargs.items():
-            if _k not in kws.keys():
-                raise Exception(f"Error: Invalid kwargs '{_k}'. Accepted kwargs are {[_x for _x in kws.keys()]}")
-            elif _k in kws.keys():
-                kws[_k] = _v
-
-        _df = df.copy()
-
-        _replicate_avg = _df.groupby(df[kws["col_cycle"]])[kws["col_rn"]].mean()
-        _replicate_avg = pd.DataFrame(_replicate_avg).reset_index()
-
-        def measure_cq():
-            _sampled_vals = _replicate_avg.head(kws["cycle_bg"])[kws["col_rn"]].to_list()
-            _bg_val_avg = sum(_sampled_vals) / len(_sampled_vals) 
-            _cq_signal = _bg_val_avg * kws["threshold_multiplier"]
-
-            _linear_range = _replicate_avg.query(f" {kws['col_rn']} > {_cq_signal} ").head(7)
-            _linear_range_rn = _linear_range[kws["col_rn"]].to_numpy()
-            _linear_range_cycle = _linear_range[kws["col_cycle"]].to_numpy()
-
-            _m, _c = np.polyfit(_linear_range_cycle, _linear_range_rn, 1)
-            _cq_val = (_cq_signal - _c) / _m
-
-            return _bg_val_avg, _cq_signal, _cq_val
-
-        _m, _n, _q = measure_cq()
-
-        if not ax:
-            print(f"Background: {_m:.4f}, Cq: {_n:.3f} at Rn {_q:.3f}")
-        else:
-            ax.text(x=_q - 1, y = 3.5, s=f"Cq: {_q:.1f} ▶", ha="right", va="center", size=7, color=kws["color"])
-            ax.axhline(y=_n, alpha=0.5, linewidth=0.9, linestyle=":", color=kws["color"])
-            ax.axvline(x=_q, alpha=0.5, linewidth=0.9, linestyle=":", color=kws["color"])
+        Parameters
+        ----------
+        param : tuple[float, float, float]
+            Values to be unpacked into np.arange() for setting the range.
+        p : int
+            Precision, i.e. how many decimal points. Defaults = 0 decimal point.
+        """
+        ticks = np.arange(*param)
+        if axis == "x":
+            ax.set_xticks(ticks)
+            ax.set_xticklabels([f"{n:,.{p}f}" for n in ticks])
+        if axis == "y":
+            ax.set_yticks(ticks)
+            ax.set_yticklabels([f"{n:,.{p}f}" for n in ticks])
+        if axis == "both":
+            ax.set_xticks(ticks)
+            ax.set_xticklabels([f"{n:,.{p}f}" for n in ticks])
+            ax.set_yticks(ticks)
+            ax.set_yticklabels([f"{n:,.{p}f}" for n in ticks])
